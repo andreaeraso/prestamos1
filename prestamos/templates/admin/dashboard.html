@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <h1 class="m-0">Panel de Administración</h1>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Estadísticas -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ total_prestamos }}</h3>
+                        <p>Préstamos Totales</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recursos -->
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ total_recursos }}</h3>
+                        <p>Recursos Disponibles</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Préstamos Recientes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Préstamos Recientes</h3>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover text-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Recurso</th>
+                                    <th>Fecha Préstamo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prestamo in prestamos_recientes %}
+                                <tr>
+                                    <td>{{ prestamo.usuario.get_full_name }}</td>
+                                    <td>{{ prestamo.recurso.nombre }}</td>
+                                    <td>{{ prestamo.fecha_prestamo }}</td>
+                                    <td>
+                                        {% if prestamo.devuelto %}
+                                            <span class="badge badge-success">Devuelto</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

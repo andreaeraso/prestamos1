@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <h1 class="m-0">Solicitar Préstamo</h1>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{{ recurso.nombre }}</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if recurso.foto %}
+                        <img src="{{ recurso.foto.url }}" class="img-fluid mb-3" alt="{{ recurso.nombre }}">
+                        {% endif %}
+                        
+                        <p><strong>Descripción:</strong> {{ recurso.descripcion }}</p>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <p class="text-muted">
+                                    Al solicitar este préstamo, aceptas devolverlo en un plazo de 7 días.
+                                </p>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Confirmar Préstamo</button>
+                            <a href="{% url 'inicio' %}" class="btn btn-secondary">Cancelar</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}   

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <h1 class="m-0">Panel de Profesor</h1>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Mis Préstamos Activos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Mis Préstamos Activos</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Recurso</th>
+                                    <th>Fecha Préstamo</th>
+                                    <th>Fecha Devolución</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prestamo in prestamos_activos %}
+                                <tr>
+                                    <td>{{ prestamo.recurso.nombre }}</td>
+                                    <td>{{ prestamo.fecha_prestamo }}</td>
+                                    <td>{{ prestamo.fecha_devolucion }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success">Devolver</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recursos Disponibles -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recursos Disponibles</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for recurso in recursos_disponibles %}
+                            <div class="col-md-4">
+                                <div class="card">
+                                    {% if recurso.foto %}
+                                    <img src="{{ recurso.foto.url }}" class="card-img-top" alt="{{ recurso.nombre }}">
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ recurso.nombre }}</h5>
+                                        <p class="card-text">{{ recurso.descripcion }}</p>
+                                        <a href="{% url 'solicitar_prestamo' recurso.id %}" class="btn btn-primary">Solicitar</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

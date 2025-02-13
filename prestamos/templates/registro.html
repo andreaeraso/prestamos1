@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Usuario</title>
+    <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="hold-transition register-page">
+    <div class="register-box" style="width: 460px;">
+        <div class="register-logo">
+            <b>Sistema de Préstamos</b>
+        </div>
+        <div class="card">
+            <div class="card-body register-card-body">
+                <p class="login-box-msg">Registro de nuevo usuario</p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Username (requerido por AbstractUser) -->
+                    <div class="input-group mb-3">
+                        <input type="text" name="username" class="form-control" placeholder="Nombre de usuario" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-user"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email (requerido por AbstractUser) -->
+                    <div class="input-group mb-3">
+                        <input type="email" name="email" class="form-control" placeholder="Correo electrónico" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-envelope"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- First Name (de AbstractUser) -->
+                    <div class="input-group mb-3">
+                        <input type="text" name="first_name" class="form-control" placeholder="Nombres" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-user"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Last Name (de AbstractUser) -->
+                    <div class="input-group mb-3">
+                        <input type="text" name="last_name" class="form-control" placeholder="Apellidos" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-user"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Código (campo personalizado) -->
+                    <div class="input-group mb-3">
+                        <input type="text" name="codigo" class="form-control" placeholder="Código estudiantil o número de identificación" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-id-card"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Programa (campo personalizado) -->
+                    <div class="input-group mb-3">
+                        <input type="text" name="programa" class="form-control" placeholder="Programa o facultad a la que pertenece" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-graduation-cap"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rol (campo personalizado) -->
+                    <div class="input-group mb-3">
+                        <select name="rol" class="form-control" required>
+                            <option value="">Seleccione su rol</option>
+                            <option value="estudiante">Estudiante</option>
+                            <option value="profesor">Profesor</option>
+                        </select>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-user-tag"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Foto (campo personalizado) -->
+                    <div class="form-group">
+                        <label>Foto de perfil (opcional)</label>
+                        <div class="input-group">
+                            <div class="custom-file">
+                                <input type="file" name="foto" class="custom-file-input" id="foto" accept="image/*">
+                                <label class="custom-file-label" for="foto">Elegir archivo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password (requerido por AbstractUser) -->
+                    <div class="input-group mb-3">
+                        <input type="password" name="password1" class="form-control" placeholder="Contraseña" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmar Password -->
+                    <div class="input-group mb-3">
+                        <input type="password" name="password2" class="form-control" placeholder="Confirmar contraseña" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+                        </div>
+                    </div>
+                </form>
+
+                <p class="mt-3 mb-0 text-center">
+                    <a href="{% url 'login' %}">Ya tengo una cuenta</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            $('.custom-file-input').on('change', function() {
+                let fileName = $(this).val().split('\\').pop();
+                $(this).next('.custom-file-label').addClass("selected").html(fileName);
+            });
+        });
+    </script>
+</body>
+</html> 

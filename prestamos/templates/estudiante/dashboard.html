@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <h1 class="m-0">Panel de Estudiante</h1>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Recursos Disponibles -->
+        <div class="row">
+            {% for recurso in recursos_disponibles %}
+            <div class="col-md-4">
+                <div class="card">
+                    {% if recurso.foto %}
+                    <img src="{{ recurso.foto.url }}" class="card-img-top" alt="{{ recurso.nombre }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ recurso.nombre }}</h5>
+                        <p class="card-text">{{ recurso.descripcion }}</p>
+                        <a href="{% url 'solicitar_prestamo' recurso.id %}" class="btn btn-primary">Solicitar Préstamo</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Mis Préstamos -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Mis Préstamos</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Recurso</th>
+                                    <th>Fecha Préstamo</th>
+                                    <th>Fecha Devolución</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prestamo in mis_prestamos %}
+                                <tr>
+                                    <td>{{ prestamo.recurso.nombre }}</td>
+                                    <td>{{ prestamo.fecha_prestamo }}</td>
+                                    <td>{{ prestamo.fecha_devolucion }}</td>
+                                    <td>
+                                        {% if prestamo.devuelto %}
+                                            <span class="badge badge-success">Devuelto</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 
