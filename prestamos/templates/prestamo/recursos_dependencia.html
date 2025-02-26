@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+    <h2>Recursos de {{ dependencia.nombre }}</h2>
+</div>
+
+{% if recursos %}
+    <div class="accordion" id="inventarioAccordion">
+        {% for tipo, recursos_por_tipo in recursos.items %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTipo{{ forloop.counter }}" aria-expanded="false" aria-controls="collapseTipo{{ forloop.counter }}">
+                    {{ tipo }}
+                </button>
+            </h2>
+            <div id="collapseTipo{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}">
+                <div class="accordion-body">
+                    <div class="accordion" id="subAccordion{{ forloop.counter }}">
+                        {% for recurso in recursos_por_tipo %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="subHeading{{ recurso.id }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecurso{{ recurso.id }}" aria-expanded="false" aria-controls="collapseRecurso{{ recurso.id }}">
+                                    {{ recurso.nombre }}
+                                </button>
+                            </h2>
+                            <div id="collapseRecurso{{ recurso.id }}" class="accordion-collapse collapse" aria-labelledby="subHeading{{ recurso.id }}" data-bs-parent="#subAccordion{{ forloop.parentloop.counter }}">
+                                <div class="accordion-body">
+                                    <p><strong>ID:</strong> {{ recurso.id }}</p>
+                                    <p><strong>Descripción:</strong> {{ recurso.descripcion }}</p>
+                                    <p><strong>Disponible:</strong> {{ recurso.disponible|yesno:"Sí,No" }}</p>
+                                    {% if recurso.foto %}
+                                        <p><img src="{{ recurso.foto.url }}" alt="{{ recurso.nombre }}" class="img-fluid" style="max-width: 150px;"></p>
+                                    {% endif %}
+                                    <p>
+                                        <a  class="btn btn-success btn-sm">Solicitar Préstamo</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No hay recursos disponibles en esta dependencia.</p>
+{% endif %}
+
+{% endblock %}

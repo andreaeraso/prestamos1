@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Selecciona una Dependencia</h2>
+    <div class="row">
+        {% for dependencia in dependencias %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ dependencia.nombre }}</h5>
+                    <p class="card-text">{{ dependencia.descripcion }}</p>
+                    <a href="{% url 'recursos_por_dependencia' dependencia.id %}" class="btn btn-primary">Ver Recursos</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No hay dependencias registradas.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

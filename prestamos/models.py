@@ -20,51 +20,47 @@ class Usuario(AbstractUser):
         (PROFESOR, 'Profesor'),
     ]
     
-    # Campos básicos
+    username = None  # Elimina el campo username
     rol = models.CharField(max_length=20, choices=ROLES, default=ESTUDIANTE)
     codigo = models.CharField(
         max_length=20, 
-        unique=True, 
-        null=True,
-        blank=True,
+        unique=True,  # Asegura que sea único para autenticación
+        null=False, 
+        blank=False, 
         help_text="Código estudiantil o número de identificación"
     )
-    programa = models.CharField(
-        max_length=100, 
-        null=True,
-        blank=True,
-        help_text="Programa o facultad a la que pertenece"
-    )
+    programa = models.CharField(max_length=100, null=True, blank=True, help_text="Programa o facultad a la que pertenece")
     foto = models.ImageField(upload_to='usuarios/', null=True, blank=True, help_text="Foto de perfil")
-    
-    # Nuevo campo para administradores de dependencia
+
     dependencia_admin = models.ForeignKey(
-        Dependencia,
+        'Dependencia',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='administradores',
         help_text="Dependencia que administra (solo para administradores)"
     )
-    
-    # Campos para manejo de permisos
+
     groups = models.ManyToManyField(Group, related_name="usuarios_personalizados")
     user_permissions = models.ManyToManyField(Permission, related_name="usuarios_personalizados")
+
+    USERNAME_FIELD = 'codigo'  # Define el campo usado para autenticación
+    REQUIRED_FIELDS = []  # No se requiere username ni email
 
     def __str__(self):
         return f"{self.get_rol_display()} - {self.first_name} {self.last_name} ({self.programa})"
 
     def save(self, *args, **kwargs):
-        # Si el usuario no es admin, asegurarse de que no tenga dependencia_admin
         if self.rol != self.ADMIN:
             self.dependencia_admin = None
         super().save(*args, **kwargs)
 
 # Modelo de Recurso
 class Recurso(models.Model):
+    id = models.IntegerField(primary_key=True)
+    tipo = models.CharField(max_length=255, default="General")
     nombre = models.CharField(max_length=255)
     foto = models.ImageField(upload_to='recursos/', blank=True, null=True)
-    color = models.CharField(max_length=50, blank=True)
     descripcion = models.TextField()
     disponible = models.BooleanField(default=True)
     dependencia = models.ForeignKey(Dependencia, on_delete=models.CASCADE)

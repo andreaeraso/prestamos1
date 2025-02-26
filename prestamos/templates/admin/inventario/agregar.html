@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Agregar Recurso</h2>
+
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li style="color: red;">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <label for="id">ID:</label>
+    <input type="text" name="id" required><br>
+
+    <label for="tipo">Tipo:</label>
+    <input type="text" name="tipo" required><br>
+
+    <label for="nombre">Nombre:</label>
+    <input type="text" name="nombre" required><br>
+
+    <label for="foto">Foto:</label>
+    <input type="file" name="foto"><br>
+
+    <label for="descripcion">Descripción:</label>
+    <textarea name="descripcion" required></textarea><br>
+
+    <button type="submit">Guardar</button>
+</form>
+{% endblock %}

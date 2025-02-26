@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Editar Recurso</h2>
+
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li style="color: red;">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <label for="id">ID:</label>
+    <input type="number" name="id" value="{{ recurso.id }}" required><br>
+
+    <label for="tipo">Tipo:</label>
+    <input type="text" name="tipo" value="{{ recurso.tipo }}" required><br>
+
+    <label for="nombre">Nombre:</label>
+    <input type="text" name="nombre" value="{{ recurso.nombre }}" required><br>
+
+    <label for="descripcion">Descripción:</label>
+    <textarea name="descripcion" required>{{ recurso.descripcion }}</textarea><br>
+
+    <label for="foto">Foto actual:</label><br>
+    {% if recurso.foto %}
+        <img src="{{ recurso.foto.url }}" alt="Foto del recurso" width="150"><br>
+    {% endif %}
+    <label for="foto">Subir nueva foto:</label>
+    <input type="file" name="foto"><br>
+
+    <button type="submit">Guardar Cambios</button>
+</form>
+
+<a href="{% url 'inventario' %}">Volver al Inventario</a>
+{% endblock %}

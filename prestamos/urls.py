@@ -7,7 +7,8 @@ from .views import (
     inicio, inventario, crear_prestamo, prestamos_pendientes,
     solicitar_prestamo, agregar_recurso, editar_recurso, eliminar_recurso,
     recursos_no_disponibles, prestamos_lista, nuevo_prestamo, prestamos_activos,
-    historial_prestamos, editar_prestamo, marcar_devuelto
+    historial_prestamos, editar_prestamo, marcar_devuelto, lista_dependencias, 
+    recursos_por_dependencia
 )
 
 router = DefaultRouter()
@@ -29,6 +30,9 @@ urlpatterns = [
     path('inventario/editar/<int:recurso_id>/', editar_recurso, name='editar_recurso'),
     path('inventario/eliminar/<int:recurso_id>/', eliminar_recurso, name='eliminar_recurso'),
     path('inventario/no-disponibles/', recursos_no_disponibles, name='recursos_no_disponibles'),
+    path('prestamo/dependencias/', lista_dependencias, name='lista_dependencias'),
+    path('dependencia/<int:dependencia_id>/recursos/', recursos_por_dependencia, name='recursos_por_dependencia'),
+
     path('prestamos/', prestamos_lista, name='prestamos_lista'),
     path('prestamos/nuevo/', nuevo_prestamo, name='nuevo_prestamo'),
     path('prestamos/activos/', prestamos_activos, name='prestamos_activos'),

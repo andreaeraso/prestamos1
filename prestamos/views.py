@@ -6,6 +6,7 @@ from .models import Dependencia, Recurso, Prestamo, Usuario
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
+from collections import defaultdict
 
 # Vista de inicio
 @login_required
@@ -33,9 +34,16 @@ def inventario(request):
     if request.user.rol != 'admin':
         messages.error(request, 'No tienes permiso para acceder a esta página')
         return redirect('inicio')
-    
-    recursos = Recurso.objects.filter(dependencia=request.user.dependencia_admin)
-    return render(request, 'admin/inventario/lista.html', {'recursos': recursos})
+
+    recursos_queryset = Recurso.objects.filter(dependencia=request.user.dependencia_admin)
+
+    # Agrupar los recursos por tipo
+    recursos_agrupados = defaultdict(list)
+    for recurso in recursos_queryset:
+        recursos_agrupados[recurso.tipo].append(recurso)
+
+    return render(request, 'admin/inventario/lista.html', {'recursos': dict(recursos_agrupados)})
+
 
 @login_required
 def agregar_recurso(request):
@@ -44,19 +52,32 @@ def agregar_recurso(request):
         return redirect('inicio')
     
     if request.method == 'POST':
+        id_recurso = request.POST.get('id', '').strip()
+        tipo = request.POST.get('tipo', '').strip()
+        nombre = request.POST.get('nombre', '').strip()
+        foto = request.FILES.get('foto', None)
+        descripcion = request.POST.get('descripcion', '').strip()
+        dependencia = request.user.dependencia_admin  # Se asocia a la dependencia del usuario
+
+        # Validar que los campos obligatorios no estén vacíos
+        if not (id_recurso and tipo and nombre and descripcion):
+            messages.error(request, 'Todos los campos son obligatorios excepto la foto')
+            return redirect('agregar_recurso')
+
         try:
             Recurso.objects.create(
-                nombre=request.POST['nombre'],
-                descripcion=request.POST['descripcion'],
-                color=request.POST['color'],
-                foto=request.FILES.get('foto'),
-                dependencia=request.user.dependencia_admin
+                id=id_recurso,
+                tipo=tipo,
+                nombre=nombre,
+                foto=foto,
+                descripcion=descripcion,
+                dependencia=dependencia
             )
             messages.success(request, 'Recurso agregado exitosamente')
             return redirect('inventario')
         except Exception as e:
             messages.error(request, f'Error al crear el recurso: {str(e)}')
-    
+
     return render(request, 'admin/inventario/agregar.html')
 
 @login_required
@@ -64,22 +85,63 @@ def editar_recurso(request, recurso_id):
     if request.user.rol != 'admin':
         messages.error(request, 'No tienes permiso para acceder a esta página')
         return redirect('inicio')
-    
+
     recurso = get_object_or_404(Recurso, id=recurso_id, dependencia=request.user.dependencia_admin)
-    
+
     if request.method == 'POST':
         try:
-            recurso.nombre = request.POST['nombre']
-            recurso.descripcion = request.POST['descripcion']
-            recurso.color = request.POST['color']
-            if 'foto' in request.FILES:
-                recurso.foto = request.FILES['foto']
+            nuevo_id = request.POST.get('id', '').strip()
+            tipo = request.POST.get('tipo', '').strip()
+            nombre = request.POST.get('nombre', '').strip()
+            descripcion = request.POST.get('descripcion', '').strip()
+            foto = request.FILES.get('foto', None)
+
+            # Si el usuario intenta cambiar el ID
+            if nuevo_id and str(nuevo_id) != str(recurso.id):
+                if Recurso.objects.filter(id=nuevo_id).exists():
+                    messages.error(request, 'El ID ya está en uso por otro recurso.')
+                    return redirect('editar_recurso', recurso_id=recurso.id)
+
+                # Crear un nuevo recurso con el nuevo ID
+                nuevo_recurso = Recurso(
+                    id=nuevo_id,
+                    tipo=tipo,
+                    nombre=nombre,
+                    descripcion=descripcion,
+                    dependencia=recurso.dependencia,  # Mantiene la dependencia
+                    disponible=recurso.disponible,  # Mantiene el estado
+                )
+
+                # Si hay una nueva foto, usarla; de lo contrario, mantener la existente
+                if foto:
+                    nuevo_recurso.foto = foto
+                else:
+                    nuevo_recurso.foto = recurso.foto
+
+                # Guardar el nuevo recurso
+                nuevo_recurso.save()
+
+                # Eliminar el recurso antiguo
+                recurso.delete()
+
+                messages.success(request, 'Recurso actualizado exitosamente con un nuevo ID.')
+                return redirect('inventario')
+
+            # Si no se cambia el ID, solo actualizar los datos
+            recurso.tipo = tipo
+            recurso.nombre = nombre
+            recurso.descripcion = descripcion
+            if foto:
+                recurso.foto = foto  # Si se sube una nueva foto, actualizarla
+
             recurso.save()
-            messages.success(request, 'Recurso actualizado exitosamente')
+
+            messages.success(request, 'Recurso actualizado exitosamente.')
             return redirect('inventario')
+
         except Exception as e:
             messages.error(request, f'Error al actualizar el recurso: {str(e)}')
-    
+
     return render(request, 'admin/inventario/editar.html', {'recurso': recurso})
 
 @login_required
@@ -287,14 +349,13 @@ def marcar_devuelto(request, prestamo_id):
     
     return redirect('prestamos_lista')
 
-def registro_view(request):
+def registro_view(request): #Registro de un usuario
     if request.method == 'POST':
         # Obtener datos del formulario
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
-        username = request.POST.get('username')
-        codigo = request.POST.get('codigo')
+        codigo = request.POST.get('codigo')  # Este parece ser el identificador único
         programa = request.POST.get('programa')
         rol = request.POST.get('rol')
         password1 = request.POST.get('password1')
@@ -303,10 +364,6 @@ def registro_view(request):
         # Validaciones básicas
         if password1 != password2:
             messages.error(request, "Las contraseñas no coinciden")
-            return redirect('registro')
-
-        if Usuario.objects.filter(username=username).exists():
-            messages.error(request, "El nombre de usuario ya existe")
             return redirect('registro')
 
         if Usuario.objects.filter(email=email).exists():
@@ -320,11 +377,10 @@ def registro_view(request):
         # Crear usuario
         try:
             usuario = Usuario.objects.create(
-                username=username,
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                codigo=codigo,
+                codigo=codigo,  # Se usa código en lugar de username
                 programa=programa,
                 rol=rol,
                 password=make_password(password1)
@@ -375,4 +431,28 @@ def solicitar_prestamo(request, recurso_id):
     
     return render(request, 'prestamo/solicitar.html', {
         'recurso': recurso
+    })
+
+@login_required
+def lista_dependencias(request): #Esta lista es la que se muestra en la pagina del estudiante al darle solicitar prestamo
+    if request.user.rol != 'estudiante':
+        messages.error(request, 'No tienes permiso para acceder a esta página')
+        return redirect('inicio')
+
+    dependencias = Dependencia.objects.all()
+    return render(request, 'prestamo/lista_dependencias.html', {'dependencias': dependencias})
+
+@login_required
+def recursos_por_dependencia(request, dependencia_id): 
+    dependencia = get_object_or_404(Dependencia, id=dependencia_id)
+    recursos_queryset = Recurso.objects.filter(dependencia=dependencia, disponible=True)
+
+    # Agrupar los recursos por tipo
+    recursos_agrupados = defaultdict(list)
+    for recurso in recursos_queryset:
+        recursos_agrupados[recurso.tipo].append(recurso)
+
+    return render(request, 'prestamo/recursos_dependencia.html', {
+    'dependencia': dependencia,
+    'recursos': dict(recursos_agrupados)
     })
