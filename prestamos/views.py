@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Dependencia, Recurso, Prestamo, Usuario
+from .models import Dependencia, Recurso, Prestamo, Usuario, SolicitudPrestamo
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
@@ -197,9 +197,9 @@ def prestamos_pendientes(request):
     prestamos = Prestamo.objects.filter(usuario=request.user, devuelto=False)
     return render(request, 'prestamos_pendientes.html', {'prestamos': prestamos})
 
-# ==========================
+# 
 # 🔐 NUEVAS VISTAS PARA LOGIN/LOGOUT
-# ==========================
+# 
 
 # Vista para iniciar sesión
 def login_view(request):
@@ -222,6 +222,9 @@ def logout_view(request):
     logout(request)
     messages.success(request, "Has cerrado sesión correctamente")
     return redirect("login")  # Redirige al login después de cerrar sesión
+
+
+#####################################################################################
 
 # Vistas de Préstamos
 @login_required
@@ -349,6 +352,10 @@ def marcar_devuelto(request, prestamo_id):
     
     return redirect('prestamos_lista')
 
+
+##########################################################################################
+
+
 def registro_view(request): #Registro de un usuario
     if request.method == 'POST':
         # Obtener datos del formulario
@@ -393,46 +400,65 @@ def registro_view(request): #Registro de un usuario
 
     return render(request, 'registro.html')
 
+## Solicitudes de los prestamos
 @login_required
 def solicitar_prestamo(request, recurso_id):
     recurso = get_object_or_404(Recurso, id=recurso_id)
-    
-    # Verificar si el recurso está disponible
-    if not recurso.disponible:
-        messages.error(request, "Este recurso no está disponible actualmente.")
-        return redirect('inicio')
-    
-    # Verificar si el usuario ya tiene un préstamo activo de este recurso
-    prestamo_activo = Prestamo.objects.filter(
-        usuario=request.user,
-        recurso=recurso,
-        devuelto=False
-    ).exists()
-    
-    if prestamo_activo:
-        messages.error(request, "Ya tienes un préstamo activo de este recurso.")
-        return redirect('inicio')
-    
-    if request.method == 'POST':
-        # Crear el préstamo
-        fecha_devolucion = datetime.now() + timedelta(days=7)  # Por defecto 7 días
-        Prestamo.objects.create(
-            usuario=request.user,
-            recurso=recurso,
-            fecha_devolucion=fecha_devolucion
-        )
-        
-        # Actualizar el estado del recurso
-        recurso.disponible = False
-        recurso.save()
-        
-        messages.success(request, "Préstamo realizado con éxito.")
-        return redirect('inicio')
-    
-    return render(request, 'prestamo/solicitar.html', {
-        'recurso': recurso
-    })
 
+    if request.method == 'POST':
+        fecha_devolucion = request.POST.get('fecha_devolucion')
+
+        # Crear la solicitud de préstamo
+        SolicitudPrestamo.objects.create(
+            recurso=recurso,
+            usuario=request.user,  # Suponiendo que el usuario autenticado es un estudiante
+            fecha_devolucion=fecha_devolucion,
+            estado=SolicitudPrestamo.PENDIENTE
+        )
+    return redirect('recursos_por_dependencia', dependencia_id=recurso.dependencia.id)  # Cambia esto al nombre correcto de tu vista
+
+#Lista para que el administrador pueda ver las solicitudes
+@login_required
+def lista_solicitudes(request):
+    if request.user.rol != 'admin':  # Asegurar que solo los administradores accedan
+        return redirect('inicio')
+
+    solicitudes = SolicitudPrestamo.objects.select_related('recurso', 'usuario').order_by('-fecha_solicitud')
+
+    return render(request, 'admin/solicitudes_prestamo.html', {'solicitudes': solicitudes})
+
+@login_required
+def aprobar_solicitud(request, solicitud_id):
+    if request.user.rol != "admin":
+        return redirect('inicio')
+
+    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
+    solicitud.estado = SolicitudPrestamo.APROBADO
+    solicitud.save()
+    return redirect('lista_solicitudes')
+
+@login_required
+def rechazar_solicitud(request, solicitud_id):
+    if request.user.rol != "admin":
+        return redirect('inicio')
+
+    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
+    solicitud.estado = SolicitudPrestamo.RECHAZADO
+    solicitud.save()
+    return redirect('lista_solicitudes')
+
+#Lista para que el estudiante pueda ver sus solicitudes
+@login_required
+def mis_solicitudes(request):
+    if request.user.rol != "estudiante":  # Solo permitir a estudiantes
+        return redirect('inicio')
+
+    solicitudes = SolicitudPrestamo.objects.filter(usuario=request.user).select_related('recurso').order_by('-fecha_solicitud')
+
+    return render(request, 'estudiante/mis_solicitudes.html', {'solicitudes': solicitudes})
+
+
+## Visualizacion de los recursos y las dependecias
 @login_required
 def lista_dependencias(request): #Esta lista es la que se muestra en la pagina del estudiante al darle solicitar prestamo
     if request.user.rol != 'estudiante':
@@ -444,6 +470,7 @@ def lista_dependencias(request): #Esta lista es la que se muestra en la pagina d
 
 @login_required
 def recursos_por_dependencia(request, dependencia_id): 
+
     dependencia = get_object_or_404(Dependencia, id=dependencia_id)
     recursos_queryset = Recurso.objects.filter(dependencia=dependencia, disponible=True)
 
@@ -456,3 +483,4 @@ def recursos_por_dependencia(request, dependencia_id):
     'dependencia': dependencia,
     'recursos': dict(recursos_agrupados)
     })
+

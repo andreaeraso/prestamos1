@@ -100,3 +100,23 @@ class Prestamo(models.Model):
 
     def __str__(self):
         return f"{self.usuario.codigo} -> {self.recurso.nombre} ({'Devuelto' if self.devuelto else 'Pendiente'})"
+
+class SolicitudPrestamo(models.Model):
+    PENDIENTE = 'pendiente'
+    APROBADO = 'aprobado'
+    RECHAZADO = 'rechazado'
+    
+    ESTADOS = [
+        (PENDIENTE, 'Pendiente'),
+        (APROBADO, 'Aprobado'),
+        (RECHAZADO, 'Rechazado'),
+    ]
+
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)  # Fecha y hora automática
+    recurso = models.ForeignKey(Recurso, on_delete=models.CASCADE)  # Recurso solicitado
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)  # Estudiante que solicita
+    fecha_devolucion = models.DateField(help_text="Fecha estimada de devolución")
+    estado = models.CharField(max_length=20, choices=ESTADOS, default=PENDIENTE)
+
+    def __str__(self):
+        return f"Solicitud de {self.usuario.codigo} para {self.recurso.nombre} - {self.get_estado_display()}"

@@ -33,8 +33,25 @@
                                         <p><img src="{{ recurso.foto.url }}" alt="{{ recurso.nombre }}" class="img-fluid" style="max-width: 150px;"></p>
                                     {% endif %}
                                     <p>
-                                        <a  class="btn btn-success btn-sm">Solicitar Préstamo</a>
+                                        <button class="btn btn-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#solicitudForm{{ recurso.id }}" aria-expanded="false" aria-controls="solicitudForm{{ recurso.id }}">
+                                            Solicitar Préstamo
+                                        </button>
                                     </p>
+                                    
+                                    <div class="collapse mt-2" id="solicitudForm{{ recurso.id }}">
+                                        <form method="post" action="{% url 'solicitar_prestamo' recurso.id %}">
+                                            {% csrf_token %}
+                                            <label for="fecha_devolucion_{{ recurso.id }}" class="form-label">Fecha de Devolución:</label>
+                                            <input type="date" name="fecha_devolucion" id="fecha_devolucion_{{ recurso.id }}" class="form-control" required>
+                                    
+                                            <div class="mt-2">
+                                                <button type="submit" class="btn btn-primary btn-sm">Aceptar</button>
+                                                <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#solicitudForm{{ recurso.id }}">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>

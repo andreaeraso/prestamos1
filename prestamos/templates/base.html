@@ -66,17 +66,17 @@
                         </li>
                         {% if request.user.rol == 'admin' %}
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{% url 'inventario' %}" class="nav-link">
                                 <i class="nav-icon fas fa-cog"></i>
-                                <p>Administración</p>
+                                <p>Inventario</p>
                             </a>
                         </li>
                         {% endif %}
                         {% if request.user.rol == 'admin' %}
                         <li class="nav-item">
-                            <a href="{% url 'inventario' %}" class="nav-link">
+                            <a href="{% url 'lista_solicitudes' %}" class="nav-link">
                                 <i class="nav-icon fas fa-cog"></i>
-                                <p>Inventario</p>
+                                <p>Solicitudes de Préstamos</p>
                             </a>
                         </li>
                         {% endif %}
@@ -93,6 +93,14 @@
                             <a href="{% url 'lista_dependencias' %}" class="nav-link">
                                 <i class="nav-icon fas fa-book"></i>
                                 <p>Solicitar Préstamo</p>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if request.user.rol == 'estudiante' %}
+                        <li class="nav-item">
+                            <a href="{% url 'mis_solicitudes' %}" class="nav-link">
+                                <i class="nav-icon fas fa-cog"></i>
+                                <p>Mis solicitudes</p>
                             </a>
                         </li>
                         {% endif %}
