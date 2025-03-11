@@ -1,6 +1,25 @@
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 
+from django.contrib.auth.models import BaseUserManager
+
+class UsuarioManager(BaseUserManager):
+    def create_user(self, codigo, password=None, **extra_fields):
+        if not codigo:
+            raise ValueError("El usuario debe tener un código único")
+        extra_fields.setdefault("is_active", True)
+        user = self.model(codigo=codigo, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, codigo, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        return self.create_user(codigo=codigo, password=password, **extra_fields)
+
+
 # Modelo de Dependencia
 class Dependencia(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
@@ -11,6 +30,8 @@ class Dependencia(models.Model):
 
 # Modelo de Usuario (Extiende AbstractUser para roles personalizados)
 class Usuario(AbstractUser):
+    objects = UsuarioManager()  # Usar el nuevo UserManager
+
     ADMIN = 'admin'
     ESTUDIANTE = 'estudiante'
     PROFESOR = 'profesor'
@@ -78,4 +99,4 @@ class Prestamo(models.Model):
     devuelto = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.usuario.username} -> {self.recurso.nombre} ({'Devuelto' if self.devuelto else 'Pendiente'})"
+        return f"{self.usuario.codigo} -> {self.recurso.nombre} ({'Devuelto' if self.devuelto else 'Pendiente'})"
