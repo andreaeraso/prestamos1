@@ -24,6 +24,14 @@ class UsuarioManager(BaseUserManager):
 class Dependencia(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True)
+    administrador = models.OneToOneField(
+        'Usuario', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='dependencia_administrada',
+        help_text="Administrador de la dependencia"
+    )
 
     def __str__(self):
         return self.nombre
@@ -53,18 +61,6 @@ class Usuario(AbstractUser):
     programa = models.CharField(max_length=100, null=True, blank=True, help_text="Programa o facultad a la que pertenece")
     foto = models.ImageField(upload_to='usuarios/', null=True, blank=True, help_text="Foto de perfil")
 
-    dependencia_admin = models.ForeignKey(
-        'Dependencia',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='administradores',
-        help_text="Dependencia que administra (solo para administradores)"
-    )
-
-    groups = models.ManyToManyField(Group, related_name="usuarios_personalizados")
-    user_permissions = models.ManyToManyField(Permission, related_name="usuarios_personalizados")
-
     USERNAME_FIELD = 'codigo'  # Define el campo usado para autenticación
     REQUIRED_FIELDS = []  # No se requiere username ni email
 
@@ -72,8 +68,9 @@ class Usuario(AbstractUser):
         return f"{self.get_rol_display()} - {self.first_name} {self.last_name} ({self.programa})"
 
     def save(self, *args, **kwargs):
-        if self.rol != self.ADMIN:
-            self.dependencia_admin = None
+        # Verifica que solo los administradores puedan ser asignados a una dependencia
+        if self.rol != self.ADMIN and hasattr(self, 'dependencia_administrada'):
+            self.dependencia_administrada = None
         super().save(*args, **kwargs)
 
 # Modelo de Recurso

@@ -1,10 +1,9 @@
+from datetime import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import Dependencia, Recurso, Prestamo, Usuario, SolicitudPrestamo
-from datetime import datetime, timedelta
-from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 from collections import defaultdict
 
@@ -13,13 +12,13 @@ from collections import defaultdict
 def inicio(request):
     if request.user.rol == 'admin':
         context = {
-            'total_recursos': Recurso.objects.filter(dependencia=request.user.dependencia_admin).count(),
+            'total_recursos': Recurso.objects.filter(dependencia=request.user.dependencia_administrada).count(),
             'prestamos_activos': Prestamo.objects.filter(
-                recurso__dependencia=request.user.dependencia_admin,
+                recurso__dependencia=request.user.dependencia_administrada,
                 devuelto=False
             ).count(),
             'prestamos_recientes': Prestamo.objects.filter(
-                recurso__dependencia=request.user.dependencia_admin
+                recurso__dependencia=request.user.dependencia_administrada
             ).order_by('-fecha_prestamo')[:10]
         }
         return render(request, 'admin/dashboard.html', context)
@@ -28,6 +27,73 @@ def inicio(request):
     else:  # estudiante
         return render(request, 'estudiante/dashboard.html')
 
+# 🔐 NUEVAS VISTAS PARA LOGIN/LOGOUT
+def registro_view(request): #Registro de un usuario
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        codigo = request.POST.get('codigo')  # Este parece ser el identificador único
+        programa = request.POST.get('programa')
+        rol = request.POST.get('rol')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+
+        # Validaciones básicas
+        if password1 != password2:
+            messages.error(request, "Las contraseñas no coinciden")
+            return redirect('registro')
+
+        if Usuario.objects.filter(email=email).exists():
+            messages.error(request, "El correo electrónico ya está registrado")
+            return redirect('registro')
+
+        if Usuario.objects.filter(codigo=codigo).exists():
+            messages.error(request, "El código ya está registrado")
+            return redirect('registro')
+
+        # Crear usuario
+        try:
+            usuario = Usuario.objects.create(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                codigo=codigo,  # Se usa código en lugar de username
+                programa=programa,
+                rol=rol,
+                password=make_password(password1)
+            )
+            messages.success(request, "Registro exitoso. Por favor inicia sesión.")
+            return redirect('login')
+        except Exception as e:
+            messages.error(request, f"Error al crear el usuario: {str(e)}")
+            return redirect('registro')
+
+    return render(request, 'registro.html')
+
+# Vista para iniciar sesión
+def login_view(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            messages.success(request, "Inicio de sesión exitoso")
+            return redirect("inicio")  # Redirige al inicio después de iniciar sesión
+        else:
+            messages.error(request, "Usuario o contraseña incorrectos")
+
+    return render(request, "login.html")
+
+# Vista para cerrar sesión
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Has cerrado sesión correctamente")
+    return redirect("login")  # Redirige al login después de cerrar sesión
+
 # Vista de recursos por dependencia
 @login_required
 def inventario(request):
@@ -35,7 +101,7 @@ def inventario(request):
         messages.error(request, 'No tienes permiso para acceder a esta página')
         return redirect('inicio')
 
-    recursos_queryset = Recurso.objects.filter(dependencia=request.user.dependencia_admin)
+    recursos_queryset = Recurso.objects.filter(dependencia=request.user.dependencia_administrada)
 
     # Agrupar los recursos por tipo
     recursos_agrupados = defaultdict(list)
@@ -57,7 +123,7 @@ def agregar_recurso(request):
         nombre = request.POST.get('nombre', '').strip()
         foto = request.FILES.get('foto', None)
         descripcion = request.POST.get('descripcion', '').strip()
-        dependencia = request.user.dependencia_admin  # Se asocia a la dependencia del usuario
+        dependencia = request.user.dependencia_administrada  # Se asocia a la dependencia del usuario
 
         # Validar que los campos obligatorios no estén vacíos
         if not (id_recurso and tipo and nombre and descripcion):
@@ -86,7 +152,7 @@ def editar_recurso(request, recurso_id):
         messages.error(request, 'No tienes permiso para acceder a esta página')
         return redirect('inicio')
 
-    recurso = get_object_or_404(Recurso, id=recurso_id, dependencia=request.user.dependencia_admin)
+    recurso = get_object_or_404(Recurso, id=recurso_id, dependencia=request.user.dependencia_administrada)
 
     if request.method == 'POST':
         try:
@@ -150,7 +216,7 @@ def eliminar_recurso(request, recurso_id):
         messages.error(request, 'No tienes permiso para acceder a esta página')
         return redirect('inicio')
     
-    recurso = get_object_or_404(Recurso, id=recurso_id, dependencia=request.user.dependencia_admin)
+    recurso = get_object_or_404(Recurso, id=recurso_id, dependencia=request.user.dependencia_administrada)
     
     if request.method == 'POST':
         try:
@@ -168,7 +234,7 @@ def recursos_no_disponibles(request):
         return redirect('inicio')
     
     recursos = Recurso.objects.filter(
-        dependencia=request.user.dependencia_admin,
+        dependencia=request.user.dependencia_administrada,
         disponible=False
     )
     return render(request, 'admin/inventario/no_disponibles.html', {'recursos': recursos})
@@ -197,33 +263,6 @@ def prestamos_pendientes(request):
     prestamos = Prestamo.objects.filter(usuario=request.user, devuelto=False)
     return render(request, 'prestamos_pendientes.html', {'prestamos': prestamos})
 
-# 
-# 🔐 NUEVAS VISTAS PARA LOGIN/LOGOUT
-# 
-
-# Vista para iniciar sesión
-def login_view(request):
-    if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None:
-            login(request, user)
-            messages.success(request, "Inicio de sesión exitoso")
-            return redirect("inicio")  # Redirige al inicio después de iniciar sesión
-        else:
-            messages.error(request, "Usuario o contraseña incorrectos")
-
-    return render(request, "login.html")
-
-# Vista para cerrar sesión
-def logout_view(request):
-    logout(request)
-    messages.success(request, "Has cerrado sesión correctamente")
-    return redirect("login")  # Redirige al login después de cerrar sesión
-
-
 #####################################################################################
 
 # Vistas de Préstamos
@@ -234,7 +273,7 @@ def prestamos_lista(request):
         return redirect('inicio')
     
     prestamos = Prestamo.objects.filter(
-        recurso__dependencia=request.user.dependencia_admin
+        recurso__dependencia=request.user.dependencia_administrada
     ).order_by('-fecha_prestamo')
     return render(request, 'admin/prestamos/lista.html', {'prestamos': prestamos})
 
@@ -249,7 +288,7 @@ def nuevo_prestamo(request):
             usuario = Usuario.objects.get(id=request.POST['usuario'])
             recurso = Recurso.objects.get(
                 id=request.POST['recurso'],
-                dependencia=request.user.dependencia_admin,
+                dependencia=request.user.dependencia_administrada,
                 disponible=True
             )
             
@@ -269,7 +308,7 @@ def nuevo_prestamo(request):
     
     context = {
         'usuarios': Usuario.objects.filter(rol__in=['estudiante', 'profesor']),
-        'recursos': Recurso.objects.filter(dependencia=request.user.dependencia_admin, disponible=True)
+        'recursos': Recurso.objects.filter(dependencia=request.user.dependencia_administrada, disponible=True)
     }
     return render(request, 'admin/prestamos/nuevo.html', context)
 
@@ -280,7 +319,7 @@ def prestamos_activos(request):
         return redirect('inicio')
     
     prestamos = Prestamo.objects.filter(
-        recurso__dependencia=request.user.dependencia_admin,
+        recurso__dependencia=request.user.dependencia_administrada,
         devuelto=False
     ).order_by('fecha_devolucion')
     
@@ -297,7 +336,7 @@ def historial_prestamos(request):
         return redirect('inicio')
     
     prestamos = Prestamo.objects.filter(
-        recurso__dependencia=request.user.dependencia_admin,
+        recurso__dependencia=request.user.dependencia_administrada,
         devuelto=True
     ).order_by('-fecha_prestamo')
     return render(request, 'admin/prestamos/historial.html', {'prestamos': prestamos})
@@ -311,7 +350,7 @@ def editar_prestamo(request, prestamo_id):
     prestamo = get_object_or_404(
         Prestamo,
         id=prestamo_id,
-        recurso__dependencia=request.user.dependencia_admin
+        recurso__dependencia=request.user.dependencia_administrada
     )
     
     if request.method == 'POST':
@@ -334,7 +373,7 @@ def marcar_devuelto(request, prestamo_id):
     prestamo = get_object_or_404(
         Prestamo,
         id=prestamo_id,
-        recurso__dependencia=request.user.dependencia_admin,
+        recurso__dependencia=request.user.dependencia_administrada,
         devuelto=False
     )
     
@@ -351,112 +390,6 @@ def marcar_devuelto(request, prestamo_id):
         messages.error(request, f'Error al marcar el préstamo como devuelto: {str(e)}')
     
     return redirect('prestamos_lista')
-
-
-##########################################################################################
-
-
-def registro_view(request): #Registro de un usuario
-    if request.method == 'POST':
-        # Obtener datos del formulario
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        codigo = request.POST.get('codigo')  # Este parece ser el identificador único
-        programa = request.POST.get('programa')
-        rol = request.POST.get('rol')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-
-        # Validaciones básicas
-        if password1 != password2:
-            messages.error(request, "Las contraseñas no coinciden")
-            return redirect('registro')
-
-        if Usuario.objects.filter(email=email).exists():
-            messages.error(request, "El correo electrónico ya está registrado")
-            return redirect('registro')
-
-        if Usuario.objects.filter(codigo=codigo).exists():
-            messages.error(request, "El código ya está registrado")
-            return redirect('registro')
-
-        # Crear usuario
-        try:
-            usuario = Usuario.objects.create(
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-                codigo=codigo,  # Se usa código en lugar de username
-                programa=programa,
-                rol=rol,
-                password=make_password(password1)
-            )
-            messages.success(request, "Registro exitoso. Por favor inicia sesión.")
-            return redirect('login')
-        except Exception as e:
-            messages.error(request, f"Error al crear el usuario: {str(e)}")
-            return redirect('registro')
-
-    return render(request, 'registro.html')
-
-## Solicitudes de los prestamos
-@login_required
-def solicitar_prestamo(request, recurso_id):
-    recurso = get_object_or_404(Recurso, id=recurso_id)
-
-    if request.method == 'POST':
-        fecha_devolucion = request.POST.get('fecha_devolucion')
-
-        # Crear la solicitud de préstamo
-        SolicitudPrestamo.objects.create(
-            recurso=recurso,
-            usuario=request.user,  # Suponiendo que el usuario autenticado es un estudiante
-            fecha_devolucion=fecha_devolucion,
-            estado=SolicitudPrestamo.PENDIENTE
-        )
-    return redirect('recursos_por_dependencia', dependencia_id=recurso.dependencia.id)  # Cambia esto al nombre correcto de tu vista
-
-#Lista para que el administrador pueda ver las solicitudes
-@login_required
-def lista_solicitudes(request):
-    if request.user.rol != 'admin':  # Asegurar que solo los administradores accedan
-        return redirect('inicio')
-
-    solicitudes = SolicitudPrestamo.objects.select_related('recurso', 'usuario').order_by('-fecha_solicitud')
-
-    return render(request, 'admin/solicitudes_prestamo.html', {'solicitudes': solicitudes})
-
-@login_required
-def aprobar_solicitud(request, solicitud_id):
-    if request.user.rol != "admin":
-        return redirect('inicio')
-
-    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
-    solicitud.estado = SolicitudPrestamo.APROBADO
-    solicitud.save()
-    return redirect('lista_solicitudes')
-
-@login_required
-def rechazar_solicitud(request, solicitud_id):
-    if request.user.rol != "admin":
-        return redirect('inicio')
-
-    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
-    solicitud.estado = SolicitudPrestamo.RECHAZADO
-    solicitud.save()
-    return redirect('lista_solicitudes')
-
-#Lista para que el estudiante pueda ver sus solicitudes
-@login_required
-def mis_solicitudes(request):
-    if request.user.rol != "estudiante":  # Solo permitir a estudiantes
-        return redirect('inicio')
-
-    solicitudes = SolicitudPrestamo.objects.filter(usuario=request.user).select_related('recurso').order_by('-fecha_solicitud')
-
-    return render(request, 'estudiante/mis_solicitudes.html', {'solicitudes': solicitudes})
-
 
 ## Visualizacion de los recursos y las dependecias
 @login_required
@@ -483,4 +416,91 @@ def recursos_por_dependencia(request, dependencia_id):
     'dependencia': dependencia,
     'recursos': dict(recursos_agrupados)
     })
+
+##########################################################################################
+
+
+## Solicitudes de los prestamos
+@login_required
+def solicitar_prestamo(request, recurso_id):
+    recurso = get_object_or_404(Recurso, id=recurso_id)
+
+    if request.method == 'POST':
+        fecha_devolucion = request.POST.get('fecha_devolucion')
+
+        # Crear la solicitud de préstamo
+        SolicitudPrestamo.objects.create(
+            recurso=recurso,
+            usuario=request.user,  # Suponiendo que el usuario autenticado es un estudiante
+            fecha_devolucion=fecha_devolucion,
+            estado=SolicitudPrestamo.PENDIENTE
+        )
+    return redirect('recursos_por_dependencia', dependencia_id=recurso.dependencia.id)  # Cambia esto al nombre correcto de tu vista
+
+#Lista para que el administrador pueda ver las solicitudes
+@login_required
+def lista_solicitudes(request):
+    if request.user.rol != 'admin':  # Asegurar que solo los administradores accedan
+        return redirect('inicio')
+
+    # Filtrar solicitudes de préstamo solo de la dependencia administrada por el usuario
+    solicitudes = SolicitudPrestamo.objects.select_related('recurso', 'usuario').filter(
+        recurso__dependencia=request.user.dependencia_administrada
+    ).order_by('-fecha_solicitud')
+
+    return render(request, 'admin/solicitudes_prestamo.html', {'solicitudes': solicitudes})
+
+
+@login_required
+def aprobar_solicitud(request, solicitud_id):
+    if request.user.rol != "admin":
+        return redirect('inicio')
+
+    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
+
+    # Verificar que el recurso aún esté disponible
+    if not solicitud.recurso.disponible:
+        messages.error(request, "El recurso no está disponible.")
+        return redirect('lista_solicitudes')
+
+    # Crear el préstamo
+    Prestamo.objects.create(
+        usuario=solicitud.usuario,
+        recurso=solicitud.recurso,
+        fecha_devolucion=solicitud.fecha_devolucion
+    )
+
+    # Cambiar estado de la solicitud a aprobado
+    solicitud.estado = SolicitudPrestamo.APROBADO
+    solicitud.save()
+
+    # Marcar el recurso como no disponible
+    solicitud.recurso.disponible = False
+    solicitud.recurso.save()
+
+    return redirect('lista_solicitudes')
+
+
+@login_required
+def rechazar_solicitud(request, solicitud_id):
+    if request.user.rol != "admin":
+        return redirect('inicio')
+
+    solicitud = get_object_or_404(SolicitudPrestamo, id=solicitud_id)
+    solicitud.estado = SolicitudPrestamo.RECHAZADO
+    solicitud.save()
+    return redirect('lista_solicitudes')
+
+#Lista para que el estudiante pueda ver sus solicitudes
+@login_required
+def mis_solicitudes(request):
+    if request.user.rol != "estudiante":  # Solo permitir a estudiantes
+        return redirect('inicio')
+
+    solicitudes = SolicitudPrestamo.objects.filter(usuario=request.user).select_related('recurso').order_by('-fecha_solicitud')
+
+    return render(request, 'estudiante/mis_solicitudes.html', {'solicitudes': solicitudes})
+
+
+
 

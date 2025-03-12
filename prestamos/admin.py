@@ -39,4 +39,4 @@ class RecursoAdmin(admin.ModelAdmin):
 class PrestamoAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'recurso', 'fecha_prestamo', 'fecha_devolucion', 'devuelto')
     list_filter = ('devuelto', 'fecha_prestamo')
-    search_fields = ('usuario__codigo', 'recurso__nombre')  # Cambié 'usuario__username' por 'usuario__codigo'
+    search_fields = ('usuario__codigo', 'recurso__nombre')  
