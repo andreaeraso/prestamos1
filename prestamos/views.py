@@ -22,10 +22,21 @@ def inicio(request):
             ).order_by('-fecha_prestamo')[:10]
         }
         return render(request, 'admin/dashboard.html', context)
-    elif request.user.rol == 'profesor':
-        return render(request, 'profesor/dashboard.html')
-    else:  # estudiante
-        return render(request, 'estudiante/dashboard.html')
+
+    elif request.user.rol in ['profesor', 'estudiante']:
+        # Obtener los préstamos aprobados y activos (no devueltos)
+        prestamos_aprobados = Prestamo.objects.filter(usuario=request.user).select_related('recurso')
+
+        context = {
+            'mis_prestamos': prestamos_aprobados
+        }
+
+        if request.user.rol == 'profesor':
+            return render(request, 'profesor/dashboard.html', context)
+        else:
+            return render(request, 'estudiante/dashboard.html', context)
+
+
 
 # 🔐 NUEVAS VISTAS PARA LOGIN/LOGOUT
 def registro_view(request): #Registro de un usuario
@@ -405,7 +416,7 @@ def lista_dependencias(request): #Esta lista es la que se muestra en la pagina d
 def recursos_por_dependencia(request, dependencia_id): 
 
     dependencia = get_object_or_404(Dependencia, id=dependencia_id)
-    recursos_queryset = Recurso.objects.filter(dependencia=dependencia, disponible=True)
+    recursos_queryset = Recurso.objects.filter(dependencia=dependencia)
 
     # Agrupar los recursos por tipo
     recursos_agrupados = defaultdict(list)
