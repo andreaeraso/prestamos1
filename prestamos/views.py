@@ -121,6 +121,20 @@ def inventario(request):
 
     return render(request, 'admin/inventario/lista.html', {'recursos': dict(recursos_agrupados)})
 
+@login_required
+def perfil_usuario(request):
+    usuario = request.user
+    
+    if usuario.is_staff:  # Asumiendo que el admin tiene `is_staff=True`
+        template_name = "admin/perfil.html"
+    elif usuario.rol == "estudiante":  # Ajusta el nombre del campo `rol` si es diferente
+        template_name = "estudiante/perfil.html"
+    elif usuario.rol == "profesor":
+        template_name = "profesor/perfil.html"
+    else:
+        template_name = "perfil.html"  # Un fallback por si acaso
+
+    return render(request, template_name, {'usuario': usuario})
 
 @login_required
 def agregar_recurso(request):
@@ -546,3 +560,30 @@ def solicitudes_por_estado(request, estado):
 
     return render(request, template, {'solicitudes': solicitudes})
 
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Prestamo
+
+@login_required
+def marcar_devuelto(request, prestamo_id):
+    if request.user.rol != 'admin':
+        messages.error(request, 'No tienes permiso para acceder a esta página')
+        return redirect('inicio')
+    
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id, devuelto=False)
+
+    try:
+        prestamo.devuelto = True
+        prestamo.fecha_devolucion = timezone.now()
+        prestamo.save()
+
+        prestamo.recurso.disponible = True
+        prestamo.recurso.save()
+
+        messages.success(request, 'Préstamo marcado como devuelto exitosamente.')
+    except Exception as e:
+        messages.error(request, f'Error al marcar el préstamo como devuelto: {str(e)}')
+
+    return redirect('inicio')

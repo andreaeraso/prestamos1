@@ -52,24 +52,36 @@
                                     <th>Recurso</th>
                                     <th>Fecha Préstamo</th>
                                     <th>Estado</th>
+                                    <th>Acciones</th> <!-- Nueva columna -->
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {% for prestamo in prestamos_recientes %}
-                                <tr>
-                                    <td>{{ prestamo.usuario.get_full_name }}</td>
-                                    <td>{{ prestamo.recurso.nombre }}</td>
-                                    <td>{{ prestamo.fecha_prestamo }}</td>
-                                    <td>
-                                        {% if prestamo.devuelto %}
-                                            <span class="badge badge-success">Devuelto</span>
-                                        {% else %}
-                                            <span class="badge badge-warning">Pendiente</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
+                                <tbody>
+                                    {% for prestamo in prestamos_recientes %}
+                                    <tr>
+                                        <td>{{ prestamo.usuario.get_full_name }}</td>
+                                        <td>{{ prestamo.recurso.nombre }}</td>
+                                        <td>{{ prestamo.fecha_prestamo }}</td>
+                                        <td>
+                                            {% if prestamo.devuelto %}
+                                                <span class="badge badge-success">Devuelto</span>
+                                            {% else %}
+                                                <span class="badge badge-warning">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not prestamo.devuelto %}
+                                                <a href="{% url 'marcar_devuelto' prestamo.id %}" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-check"></i> Devolver
+                                                </a>
+                                                <a href="#" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-clock"></i> Extender
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Sin acciones</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>                          
                         </table>
                     </div>
                 </div>
