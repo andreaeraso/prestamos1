@@ -39,19 +39,18 @@ def inicio(request):
 
 
 # 🔐 NUEVAS VISTAS PARA LOGIN/LOGOUT
-def registro_view(request): #Registro de un usuario
+def registro_view(request):  # Registro de un usuario
     if request.method == 'POST':
-        # Obtener datos del formulario
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
-        codigo = request.POST.get('codigo')  # Este parece ser el identificador único
+        codigo = request.POST.get('codigo')
         programa = request.POST.get('programa')
         rol = request.POST.get('rol')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
+        foto = request.FILES.get('foto')  # Capturar la imagen
 
-        # Validaciones básicas
         if password1 != password2:
             messages.error(request, "Las contraseñas no coinciden")
             return redirect('registro')
@@ -64,17 +63,18 @@ def registro_view(request): #Registro de un usuario
             messages.error(request, "El código ya está registrado")
             return redirect('registro')
 
-        # Crear usuario
         try:
             usuario = Usuario.objects.create(
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                codigo=codigo,  # Se usa código en lugar de username
+                codigo=codigo,
                 programa=programa,
                 rol=rol,
-                password=make_password(password1)
+                foto=foto,  # Guardar la imagen
             )
+            usuario.set_password(password1)  # Encriptar la contraseña
+            usuario.save()
             messages.success(request, "Registro exitoso. Por favor inicia sesión.")
             return redirect('login')
         except Exception as e:
@@ -82,6 +82,7 @@ def registro_view(request): #Registro de un usuario
             return redirect('registro')
 
     return render(request, 'registro.html')
+
 
 # Vista para iniciar sesión
 def login_view(request):

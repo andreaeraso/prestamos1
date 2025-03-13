@@ -2,6 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views_api import UsuarioViewSet, DependenciaViewSet, RecursoViewSet, PrestamoViewSet
+from django.conf import settings
+from django.conf.urls.static import static
 from .views import (
     login_view, logout_view, registro_view,
     inicio, inventario, crear_prestamo, prestamos_pendientes,
@@ -50,4 +52,7 @@ urlpatterns = [
     path('prestamos/historial/', historial_prestamos, name='historial_prestamos'),
     path('prestamos/editar/<int:prestamo_id>/', editar_prestamo, name='editar_prestamo'),
     path('prestamos/devolver/<int:prestamo_id>/', marcar_devuelto, name='marcar_devuelto'),
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
