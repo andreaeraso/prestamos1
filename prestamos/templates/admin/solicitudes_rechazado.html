@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Solicitudes Rechazadas</h2>
+
+    {% if solicitudes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Recurso</th>
+                    <th>Usuario</th>
+                    <th>Fecha de Solicitud</th>
+                    <th>Fecha de Devolución</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.id }}</td>
+                    <td>{{ solicitud.recurso.nombre }}</td>
+                    <td>{{ solicitud.usuario.first_name }} {{ solicitud.usuario.last_name }}</td>
+                    <td>{{ solicitud.fecha_solicitud }}</td>
+                    <td>{{ solicitud.fecha_devolucion }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay solicitudes rechazadas registradas.</p>
+    {% endif %}
+</div>
+{% endblock %}

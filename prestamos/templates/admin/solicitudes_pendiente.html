@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Solicitudes de Préstamo</h2>
+    
+    {% if solicitudes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Recurso</th>
+                    <th>Usuario</th>
+                    <th>Fecha Solicitud</th>
+                    <th>Fecha Devolución</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.id }}</td>
+                    <td>{{ solicitud.recurso.nombre }}</td>
+                    <td>{{ solicitud.usuario.first_name }} {{ solicitud.usuario.last_name }}</td>
+                    <td>{{ solicitud.fecha_solicitud }}</td>
+                    <td>{{ solicitud.fecha_devolucion }}</td>
+                    <td>{{ solicitud.get_estado_display }}</td>
+                    <td>
+                        <a href="{% url 'aprobar_solicitud' solicitud.id %}" class="btn btn-success btn-sm">Aprobar</a>
+                        <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm">Rechazar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay solicitudes de préstamo registradas.</p>
+    {% endif %}
+</div>
+{% endblock %}

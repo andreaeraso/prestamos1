@@ -513,5 +513,36 @@ def mis_solicitudes(request):
     return render(request, 'estudiante/mis_solicitudes.html', {'solicitudes': solicitudes})
 
 
+@login_required
+def solicitudes_por_estado(request, estado):
+    # Asegurar que el estado sea correcto según el modelo
+    estado_map = {
+        'pendiente': SolicitudPrestamo.PENDIENTE,
+        'aprobado': SolicitudPrestamo.APROBADO,
+        'rechazado': SolicitudPrestamo.RECHAZADO
+    }
 
+    if estado not in estado_map:
+        messages.error(request, "Estado inválido.")
+        return redirect('inicio')
+
+    # Filtrar según el rol del usuario
+    if request.user.rol == "admin":
+        solicitudes = SolicitudPrestamo.objects.filter(
+            recurso__dependencia=request.user.dependencia_administrada,
+            estado=estado_map[estado]
+        )
+        template = f'admin/solicitudes_{estado}.html'
+
+    elif request.user.rol in ["estudiante", "profesor"]:
+        solicitudes = SolicitudPrestamo.objects.filter(
+            usuario=request.user,
+            estado=estado_map[estado]
+        )
+        template = f'{request.user.rol}/solicitudes_{estado}.html'
+
+    else:
+        return redirect('inicio')
+
+    return render(request, template, {'solicitudes': solicitudes})
 

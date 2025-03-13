@@ -9,7 +9,7 @@ from .views import (
     recursos_no_disponibles, prestamos_lista, nuevo_prestamo, prestamos_activos,
     historial_prestamos, editar_prestamo, marcar_devuelto, lista_dependencias, 
     recursos_por_dependencia, lista_solicitudes, aprobar_solicitud, rechazar_solicitud,
-    mis_solicitudes
+    mis_solicitudes,solicitudes_por_estado
 )
 
 router = DefaultRouter()
@@ -38,6 +38,10 @@ urlpatterns = [
     path('solicitudes/aprobar/<int:solicitud_id>/', aprobar_solicitud, name='aprobar_solicitud'),
     path('solicitudes/rechazar/<int:solicitud_id>/', rechazar_solicitud, name='rechazar_solicitud'),
     path('mis-solicitudes/', mis_solicitudes, name='mis_solicitudes'),
+    path('solicitudes/<str:estado>/', solicitudes_por_estado, name='solicitudes_por_estado'),
+
+
+
 
     path('prestamos/', prestamos_lista, name='prestamos_lista'),
     path('prestamos/nuevo/', nuevo_prestamo, name='nuevo_prestamo'),

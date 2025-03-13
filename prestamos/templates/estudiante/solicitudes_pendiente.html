@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mis Solicitudes Pendientes</h2>
+
+    {% if solicitudes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Recurso</th>
+                    <th>Fecha de Solicitud</th>
+                    <th>Fecha de Devolución</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.id }}</td>
+                    <td>{{ solicitud.recurso.nombre }}</td>
+                    <td>{{ solicitud.fecha_solicitud }}</td>
+                    <td>{{ solicitud.fecha_devolucion }}</td>
+                    <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No tienes solicitudes pendientes.</p>
+    {% endif %}
+</div>
+{% endblock %}

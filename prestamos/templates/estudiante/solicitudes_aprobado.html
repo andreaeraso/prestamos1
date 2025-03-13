@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Solicitudes Aprobadas</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Recurso</th>
+                <th>Fecha de Solicitud</th>
+                <th>Fecha de Devolución</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for solicitud in solicitudes %}
+            <tr>
+                <td>{{ solicitud.recurso.nombre }}</td>
+                <td>{{ solicitud.fecha_solicitud }}</td>
+                <td>{{ solicitud.fecha_devolucion }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">No tienes solicitudes aprobadas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
