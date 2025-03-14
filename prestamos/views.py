@@ -588,3 +588,12 @@ def marcar_devuelto(request, prestamo_id):
         messages.error(request, f'Error al marcar el préstamo como devuelto: {str(e)}')
 
     return redirect('inicio')
+
+def pwa_login(request):
+    return render(request, "mobile/login.html")
+
+def pwa_registro(request):
+    return render(request, "mobile/registro.html")
+
+def pwa_inicio(request):
+    return render(request, "mobile/inicio.html")

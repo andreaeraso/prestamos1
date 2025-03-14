@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 
 # Importación de vistas para la API REST
 from .views_api import UsuarioViewSet, DependenciaViewSet, RecursoViewSet, PrestamoViewSet
@@ -15,7 +16,7 @@ from .views import (
     recursos_no_disponibles, prestamos_lista, nuevo_prestamo, prestamos_activos,
     historial_prestamos, editar_prestamo, marcar_devuelto, lista_dependencias, 
     recursos_por_dependencia, lista_solicitudes, aprobar_solicitud, rechazar_solicitud,
-    mis_solicitudes, solicitudes_por_estado, perfil_usuario
+    mis_solicitudes, solicitudes_por_estado, perfil_usuario, pwa_inicio,pwa_login,pwa_registro
 )
 
 # Configuración de las rutas de la API REST con Django Rest Framework
@@ -70,6 +71,11 @@ urlpatterns = [
     path('prestamos/historial/', historial_prestamos, name='historial_prestamos'),
     path('prestamos/editar/<int:prestamo_id>/', editar_prestamo, name='editar_prestamo'),
     path('prestamos/devolver/<int:prestamo_id>/', marcar_devuelto, name='marcar_devuelto'),
+    
+    path('pwa/login/', pwa_login, name='pwa_login'),
+    path('pwa/registro/', pwa_registro, name='pwa_registro'),
+    path('pwa/inicio/', pwa_inicio, name='pwa_inicio'),
+    path("manifest.json", TemplateView.as_view(template_name="manifest.json", content_type="application/json")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Configuración para servir archivos estáticos en modo DEBUG
