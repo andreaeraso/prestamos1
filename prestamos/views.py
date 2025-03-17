@@ -561,11 +561,6 @@ def solicitudes_por_estado(request, estado):
 
     return render(request, template, {'solicitudes': solicitudes})
 
-from django.utils import timezone
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import Prestamo
 
 @login_required
 def marcar_devuelto(request, prestamo_id):
